@@ -1,0 +1,42 @@
+import { Effect } from 'effect';
+import { toast } from 'sonner';
+
+type ToastOptions<A, E, Args extends readonly unknown[]> = {
+  onWaiting: string | ((...args: Args) => string);
+  onSuccess: string | ((a: A, ...args: Args) => string);
+  onFailure: string | ((error: E | undefined, ...args: Args) => string);
+};
+
+export const withToast = <A, E, Args extends readonly unknown[], R>(
+  options: ToastOptions<A, E, Args>
+) =>
+  Effect.fnUntraced(function* (self: Effect.Effect<A, E, R>, ...args: Args) {
+    const toastId = toast.loading(
+      typeof options.onWaiting === 'string'
+        ? options.onWaiting
+        : options.onWaiting(...args)
+    );
+
+    return yield* self.pipe(
+      Effect.tap((a) =>
+        Effect.sync(() => {
+          toast.success(
+            typeof options.onSuccess === 'string'
+              ? options.onSuccess
+              : options.onSuccess(a, ...args),
+            { id: toastId }
+          );
+        })
+      ),
+      Effect.catchAll((err) =>
+        Effect.sync(() => {
+          toast.error(
+            typeof options.onFailure === 'string'
+              ? options.onFailure
+              : options.onFailure(err, ...args),
+            { id: toastId }
+          );
+        })
+      )
+    );
+  });

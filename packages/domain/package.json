@@ -1,0 +1,20 @@
+{
+  "name": "@repo/domain",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@effect/platform": "^0.90.2",
+    "@repo/shared": "workspace:*",
+    "effect": "^3.17.7"
+  },
+  "exports": {
+    "./*": "./src/*.ts"
+  }
+}

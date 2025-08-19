@@ -1,0 +1,27 @@
+{
+  "name": "@repo/shared",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@effect/platform": "^0.90.2",
+    "@effect/sql": "^0.44.1",
+    "@effect/sql-drizzle": "^0.43.0",
+    "@effect/sql-pg": "^0.45.0",
+    "drizzle-kit": "^0.31.4",
+    "drizzle-orm": "^0.44.4",
+    "effect": "^3.17.7",
+    "postgres": "^3.4.7",
+    "resend": "^6.0.1",
+    "sonner": "^2.0.7"
+  },
+  "exports": {
+    "./*": "./src/*.ts"
+  }
+}
