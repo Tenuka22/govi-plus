@@ -49,23 +49,6 @@ export const authErrorCodeMessages: ErrorTypes = {
   },
   ACCOUNT_NOT_FOUND: { en: 'The requested account could not be found.' },
   USER_ALREADY_HAS_PASSWORD: { en: 'This user already has a password set.' },
-  CHALLENGE_NOT_FOUND: { en: 'Passkey challenge was not found. Please retry.' },
-  YOU_ARE_NOT_ALLOWED_TO_REGISTER_THIS_PASSKEY: {
-    en: 'You are not allowed to register this passkey on this account.',
-  },
-  FAILED_TO_VERIFY_REGISTRATION: {
-    en: 'We could not verify your passkey registration.',
-  },
-  PASSKEY_NOT_FOUND: { en: 'The requested passkey could not be found.' },
-  AUTHENTICATION_FAILED: {
-    en: 'Passkey authentication failed. Please try again.',
-  },
-  UNABLE_TO_CREATE_SESSION: {
-    en: 'We were unable to create your session after authentication.',
-  },
-  FAILED_TO_UPDATE_PASSKEY: {
-    en: 'Your passkey could not be updated. Please try again.',
-  },
   YOU_CANNOT_BAN_YOURSELF: { en: 'You cannot ban your own account.' },
   YOU_ARE_NOT_ALLOWED_TO_CHANGE_USERS_ROLE: {
     en: 'You are not authorized to change user roles.',

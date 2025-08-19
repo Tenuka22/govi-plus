@@ -1,18 +1,7 @@
 import type { ReactNode } from 'react';
 
-const ROOT_LAYOUT = ({
-  children,
-  authDialog,
-}: {
-  children: ReactNode;
-  authDialog: ReactNode;
-}) => {
-  return (
-    <>
-      {children}
-      {authDialog}
-    </>
-  );
+const ROOT_LAYOUT = ({ children }: { children: ReactNode }) => {
+  return <>{children}</>;
 };
 
 export default ROOT_LAYOUT;

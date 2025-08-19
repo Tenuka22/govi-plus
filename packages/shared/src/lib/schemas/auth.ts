@@ -16,16 +16,6 @@ export const socialLoginFormSchema = Schema.Struct({
   provider: Schema.Literal('google', 'facebook'),
 });
 
-export const passkeyFormSchema = Schema.Struct({
-  email: Schema.optional(
-    Schema.NonEmptyTrimmedString.pipe(
-      Schema.pattern(EmailRegex, {
-        message: createRegexParseErrorHandler('Email'),
-      })
-    )
-  ),
-});
-
 export const errorSchema = Schema.Struct({
   message: Schema.optional(Schema.String),
   statusText: Schema.optional(Schema.String),

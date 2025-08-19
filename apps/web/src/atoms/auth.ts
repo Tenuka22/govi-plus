@@ -1,6 +1,5 @@
 import type {
   emailLoginFormSchema,
-  passkeyFormSchema,
   socialLoginFormSchema,
 } from '@repo/shared/lib/schemas/auth';
 import { withToast } from '@repo/shared/lib/toasted-atoms';
@@ -101,30 +100,6 @@ export const socialLoginFnAtom = webRuntimeAtom.fn(
       },
 
       onWaiting: (args) => `Connecting the site with ${args.provider}...`,
-    })
-  )
-);
-
-export const passkeyLoginFnAtom = webRuntimeAtom.fn(
-  Effect.fnUntraced(
-    function* (args: typeof passkeyFormSchema.Type) {
-      const betterAuth = yield* BetterAuth;
-      const caller = yield* betterAuth.caller;
-
-      yield* Effect.logDebug('Attempting passkey sign in');
-
-      const data = yield* caller((c) => c.signIn.passkey(args));
-
-      yield* Effect.logDebug('Passkey authentication successful');
-      return data;
-    },
-    withToast({
-      onFailure: (err) =>
-        err?._tag === 'BetterAuthApiError'
-          ? err.message
-          : `Passkey sign-in failed. ${defaultAuthFailMessage}`,
-      onSuccess: () => 'Successfully signed in with passkey!',
-      onWaiting: () => 'Authenticating with passkey...',
     })
   )
 );
