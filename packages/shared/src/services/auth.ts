@@ -28,6 +28,7 @@ const getAuth = Effect.gen(function* () {
   const resendClient = yield* resend.getClient;
 
   const FACEBOOK_CLIENT_SECRET = yield* env.facebookClientSecret;
+  const ADMIN_EMAILS = yield* env.adminEmails;
   const GOOGLE_CLIENT_SECRET = yield* env.googleClientSecret;
   const FACEBOOK_CLIENT_ID = yield* env.facebookClientId;
   const GOOGLE_CLIENT_ID = yield* env.googleClientId;
@@ -45,7 +46,6 @@ const getAuth = Effect.gen(function* () {
         user: {
           create: {
             before: async (user) => {
-              const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(';') || [];
               if (ADMIN_EMAILS.includes(user.email)) {
                 return {
                   data: {

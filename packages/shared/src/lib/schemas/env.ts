@@ -25,6 +25,15 @@ const facebookClientSecret = Schema.Config(
 );
 
 const googleClientId = Schema.Config('GOOGLE_CLIENT_ID', Schema.String);
+const adminEmails = Schema.Config(
+  'ADMIN_EMAILS',
+  Schema.String.pipe(
+    Schema.transform(Schema.Array(Schema.String), {
+      decode: (v) => v.split(';'),
+      encode: (v) => v.join(';'),
+    })
+  )
+);
 
 const googleClientSecret = Schema.Config(
   'GOOGLE_CLIENT_SECRET',
@@ -49,6 +58,7 @@ export const ServerEnvSchema = {
   googleClientSecret,
   databaseURL,
   authSecret,
+  adminEmails,
   serverURL: serverServerURL,
   webClientURL: serverWebClientURL,
 };
