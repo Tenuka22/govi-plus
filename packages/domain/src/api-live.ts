@@ -3,8 +3,13 @@ import { Layer } from 'effect';
 import { DomainApi } from './domain';
 import { BetterAuthLive } from './http-groups/implementations/auth';
 import { HeathGroupLive } from './http-groups/implementations/health';
+import { PolicyLive } from './http-groups/implementations/policy';
 
-const ApiImplementations = Layer.mergeAll(HeathGroupLive, BetterAuthLive);
+const ApiImplementations = Layer.mergeAll(
+  HeathGroupLive,
+  BetterAuthLive,
+  PolicyLive
+);
 
 export const ApiLive = HttpApiBuilder.api(DomainApi).pipe(
   Layer.provide(ApiImplementations)

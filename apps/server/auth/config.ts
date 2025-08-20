@@ -1,6 +1,6 @@
 import { BetterAuth } from '@repo/shared/services/auth';
 import { Effect } from 'effect';
-import { serverRuntime } from '../runtimes/server';
+import { applicationServiceLayers } from '../runtimes/server';
 
 const getAuthClient = Effect.gen(function* () {
   const auth = yield* BetterAuth;
@@ -10,4 +10,6 @@ const getAuthClient = Effect.gen(function* () {
   return authClient;
 });
 
-export const auth = await serverRuntime.runPromise(getAuthClient);
+export const auth = await Effect.runPromise(
+  getAuthClient.pipe(Effect.provide(applicationServiceLayers))
+);

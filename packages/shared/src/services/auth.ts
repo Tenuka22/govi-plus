@@ -8,7 +8,7 @@ import type { ConfigError } from 'effect/ConfigError';
 // biome-ignore lint/performance/noNamespaceImport: Drizzle client requires the full schema
 import * as databaseSchema from '../database/schema';
 import { BetterAuthApiError } from '../errors/auth';
-import { errorSchema } from '../lib/schemas/auth';
+import { errorSchema, userRoleSchema } from '../lib/schemas/auth';
 import { ServerConfig } from './config';
 import { Resend } from './resend';
 
@@ -25,7 +25,6 @@ const getAuth = Effect.gen(function* () {
   const appConfig = yield* config.getAppConfig;
 
   const appInfo = appConfig.ApplicationInfo;
-
   const resendClient = yield* resend.getClient;
 
   const FACEBOOK_CLIENT_SECRET = yield* env.facebookClientSecret;
@@ -41,6 +40,31 @@ const getAuth = Effect.gen(function* () {
       appName: appInfo.Name,
       trustedOrigins: [WEB_CLIENT_URL],
       basePath: '/auth',
+
+      databaseHooks: {
+        user: {
+          create: {
+            before: async (user) => {
+              const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(';') || [];
+              if (ADMIN_EMAILS.includes(user.email)) {
+                return {
+                  data: {
+                    ...user,
+                    role:
+                      await Schema.decodeUnknownSync(userRoleSchema)('admin'),
+                  },
+                };
+              }
+              return {
+                data: {
+                  ...user,
+                  role: await Schema.decodeUnknownSync(userRoleSchema)('user'),
+                },
+              };
+            },
+          },
+        },
+      },
 
       emailAndPassword: {
         enabled: true,
@@ -72,7 +96,7 @@ const getAuth = Effect.gen(function* () {
       emailVerification: {
         autoSignInAfterVerification: true,
         sendOnSignUp: true,
-        sendVerificationEmail: async ({ url, user }) => {
+        sendVerificationEmail: async ({ user, url }) => {
           await resendClient.emails.send({
             from: 'NoReply <onboarding@resend.dev>',
             to: [user.email],

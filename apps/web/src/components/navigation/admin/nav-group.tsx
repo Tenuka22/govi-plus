@@ -29,7 +29,7 @@ import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import type { AdminNavGroup } from './types';
+import type { AdminNavGroup, NavCollapsible, NavItem, NavLink } from './types';
 
 const NavGroup = ({ title, items }: AdminNavGroup) => {
   const { state, isMobile } = useSidebar();

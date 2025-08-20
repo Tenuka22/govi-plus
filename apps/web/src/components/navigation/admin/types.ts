@@ -4,17 +4,17 @@ interface BaseNavItem {
   icon?: React.ElementType;
 }
 
-type NavLink = BaseNavItem & {
+export type NavLink = BaseNavItem & {
   url: string;
   items?: never;
 };
 
-type NavCollapsible = BaseNavItem & {
+export type NavCollapsible = BaseNavItem & {
   items: (BaseNavItem & { url: string })[];
   url?: never;
 };
 
-type NavItem = NavCollapsible | NavLink;
+export type NavItem = NavCollapsible | NavLink;
 
 export interface AdminNavGroup {
   title: string;

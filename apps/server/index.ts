@@ -14,7 +14,6 @@ const CorsEffect = Effect.gen(function* () {
   const serverConfig = yield* ServerConfig;
   const appConfig = yield* serverConfig.getAppConfig;
   const clientOrigin = appConfig.ApplicationInfo.WebOrigin;
-
   return HttpMiddleware.cors({
     credentials: true,
     allowedOrigins: [clientOrigin],
@@ -23,17 +22,20 @@ const CorsEffect = Effect.gen(function* () {
 
 const CorsLayer = HttpApiBuilder.middleware(CorsEffect);
 
-HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
+const ServerLayer = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(HttpApiSwagger.layer()),
   Layer.provide(HttpApiBuilder.middlewareOpenApi()),
   Layer.provide(CorsLayer),
   Layer.provideMerge(HttpServer.layerContext),
   Layer.provide(ApiLive),
-  Layer.provide(applicationServiceLayers),
   HttpServer.withLogAddress,
   Layer.provide(Logger.minimumLogLevel(LogLevel.All)),
   Layer.provide(Logger.structured),
-  Layer.provide(BunHttpServer.layer({ port: 3000 })),
-  Layer.launch,
-  BunRuntime.runMain
+  Layer.provide(BunHttpServer.layer({ port: 3000 }))
 );
+
+const program = Layer.launch(ServerLayer).pipe(
+  Effect.provide(applicationServiceLayers)
+);
+
+BunRuntime.runMain(program);
