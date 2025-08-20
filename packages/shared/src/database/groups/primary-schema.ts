@@ -167,14 +167,73 @@ export const unitTypeEnum = pgEnum('unit_type', [
   'bags',
 ]);
 
+export const farmingMethodEnum = pgEnum('farming_method', [
+  'organic',
+  'conventional',
+  'integrated',
+]);
+
+export const districtEnum = pgEnum('district_enum', [
+  'galle',
+  'colombo',
+  'mathara',
+]);
+
+export const provinceEnum = pgEnum('province_enum', ['southern', 'western']);
+
+export const communicationChannelEnum = pgEnum('communication_channel', [
+  'sms',
+  'email',
+  'whatsapp',
+]);
+
+export const cropPreferenceEnum = pgEnum('crop_preference', [
+  'paddy',
+  'vegetables',
+  'fruits',
+]);
+
+export const suitableSeasonEnum = pgEnum('suitable_season', [
+  'maha',
+  'yala',
+  'off_season',
+]);
+
+export const tagEnum = pgEnum('tag', [
+  'beginner_friendly',
+  'advanced',
+  'seasonal',
+]);
+
+export const attachmentTypeEnum = pgEnum('attachment_type', [
+  'image',
+  'document',
+  'video',
+]);
+
+export const photoTypeEnum = pgEnum('photo_type', [
+  'field_photo',
+  'pest_damage',
+  'growth_stage',
+]);
+
+export type FarmingMethod = (typeof farmingMethodEnum.enumValues)[number];
+export type CommunicationChannel =
+  (typeof communicationChannelEnum.enumValues)[number];
+export type CropPreference = (typeof cropPreferenceEnum.enumValues)[number];
+export type SuitableSeason = (typeof suitableSeasonEnum.enumValues)[number];
+export type Tag = (typeof tagEnum.enumValues)[number];
+export type AttachmentType = (typeof attachmentTypeEnum.enumValues)[number];
+export type PhotoType = (typeof photoTypeEnum.enumValues)[number];
+
 export type FarmerLocation = {
   lat: number;
   lng: number;
-  district: string;
-  province: string;
+  district: (typeof districtEnum.enumValues)[number];
+  province: (typeof provinceEnum.enumValues)[number];
 };
 
-export type CommunicationChannels = 'sms' | 'email' | 'whatsapp' | 'phone';
+export type CommunicationChannels = 'sms' | 'email' | 'whatsapp';
 
 export type FarmLocation = {
   lat: number;
@@ -188,10 +247,10 @@ export type ParcelCoordinates = {
 };
 
 export type CropCharacteristics = {
-  yield_potential: string;
-  disease_resistance: string[];
-  water_requirement: 'low' | 'medium' | 'high';
-  fertilizer_requirement: 'low' | 'medium' | 'high';
+  yieldPotential: string;
+  diseaseResistance: string[];
+  waterRequirement: 'low' | 'medium' | 'high';
+  fertilizerRequirement: 'low' | 'medium' | 'high';
 };
 
 export type YieldData = {
@@ -212,7 +271,7 @@ export type TemperatureData = {
 
 export type IrrigationData = {
   duration: number;
-  water_amount?: number;
+  waterAmount?: number;
 };
 
 export type TreatmentRecord = {
@@ -235,11 +294,13 @@ export const farmers = pgTable('farmers', {
   address: text('address'),
   location: jsonb('location').$type<FarmerLocation>(),
   experienceLevel: experienceLevelEnum('experience_level').default('beginner'),
-  farmingMethods: jsonb('farming_methods').$type<string[]>().default([]),
+  farmingMethods: jsonb('farming_methods').$type<FarmingMethod[]>().default([]),
   communicationChannels: jsonb('communication_channels')
-    .$type<CommunicationChannels[]>()
-    .default(['sms', 'email']),
-  cropPreferences: jsonb('crop_preferences').$type<string[]>().default([]),
+    .$type<CommunicationChannel[]>()
+    .default(['sms']),
+  cropPreferences: jsonb('crop_preferences')
+    .$type<CropPreference[]>()
+    .default([]),
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -295,7 +356,7 @@ export const cropVarieties = pgTable('crop_varieties', {
   description: text('description'),
   growthPeriod: integer('growth_period').notNull(),
   characteristics: jsonb('characteristics').$type<CropCharacteristics>(),
-  suitableSeasons: jsonb('suitable_seasons').$type<string[]>(),
+  suitableSeasons: jsonb('suitable_seasons').$type<SuitableSeason[]>(),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -345,7 +406,7 @@ export const growthStages = pgTable(
     expectedDuration: integer('expected_duration'),
     healthStatus: healthStatusEnum('health_status').default('good'),
     observations: text('observations'),
-    photos: jsonb('photos').$type<string[]>().default([]),
+    photos: jsonb('photos').$type<PhotoType[]>().default([]),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },
@@ -442,7 +503,7 @@ export const farmerQueries = pgTable(
     assignedTo: varchar('assigned_to', { length: 255 }),
     response: text('response'),
     responseDate: timestamp('response_date'),
-    attachments: jsonb('attachments').$type<string[]>().default([]),
+    attachments: jsonb('attachments').$type<AttachmentType[]>().default([]),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },
@@ -487,7 +548,7 @@ export const knowledgeBase = pgTable(
     content: text('content').notNull(),
     category: knowledgeCategoryEnum('category').notNull(),
     cropType: varchar('crop_type', { length: 100 }),
-    tags: jsonb('tags').$type<string[]>().default([]),
+    tags: jsonb('tags').$type<Tag[]>().default([]),
     language: languageEnum('language').default('en'),
     author: varchar('author', { length: 255 }),
     isPublished: boolean('is_published').default(true),
@@ -540,7 +601,7 @@ export const pestDiseaseRecords = pgTable(
     symptoms: text('symptoms'),
     treatmentRecord: jsonb('treatment_record').$type<TreatmentRecord>(),
     isResolved: boolean('is_resolved').default(false),
-    photos: jsonb('photos').$type<string[]>().default([]),
+    photos: jsonb('photos').$type<PhotoType[]>().default([]),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },
