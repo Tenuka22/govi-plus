@@ -13,6 +13,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { user } from './auth-schema';
 
 export const experienceLevelEnum = pgEnum('experience_level', [
   'beginner',
@@ -289,18 +290,26 @@ export type UsageRecord = {
 export const farmers = pgTable('farmers', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 255 }).notNull(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   email: varchar('email', { length: 255 }).unique(),
   phone: varchar('phone', { length: 20 }).notNull(),
   address: text('address'),
   location: jsonb('location').$type<FarmerLocation>(),
   experienceLevel: experienceLevelEnum('experience_level').default('beginner'),
-  farmingMethods: jsonb('farming_methods').$type<FarmingMethod[]>().default([]),
+  farmingMethods: jsonb('farming_methods')
+    .$type<FarmingMethod[]>()
+    .default([])
+    .notNull(),
   communicationChannels: jsonb('communication_channels')
     .$type<CommunicationChannel[]>()
-    .default(['sms']),
+    .default(['sms'])
+    .notNull(),
   cropPreferences: jsonb('crop_preferences')
     .$type<CropPreference[]>()
-    .default([]),
+    .default([])
+    .notNull(),
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

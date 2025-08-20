@@ -1,3 +1,4 @@
+import { FarmerActionImplementations } from '@repo/shared/database/actions/farmer';
 import { BetterAuthALive } from '@repo/shared/services/auth';
 import { ServerConfigLive } from '@repo/shared/services/config';
 import { CurrentUserLive } from '@repo/shared/services/current-user';
@@ -13,6 +14,8 @@ const databaseServiceLayers = Layer.mergeAll(DatabaseLive, DrizzleLive).pipe(
   Layer.provide(baseServiceLayers)
 );
 
+const databaseActionsLayer = Layer.mergeAll(FarmerActionImplementations);
+
 const authServiceLayers = Layer.mergeAll(BetterAuthALive, CurrentUserLive).pipe(
   Layer.provide(databaseServiceLayers)
 );
@@ -21,5 +24,6 @@ export const applicationServiceLayers = Layer.mergeAll(
   ResendLive,
   authServiceLayers,
   databaseServiceLayers,
-  baseServiceLayers
+  baseServiceLayers,
+  databaseActionsLayer
 );
