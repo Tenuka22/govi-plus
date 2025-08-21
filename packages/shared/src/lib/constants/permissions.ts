@@ -10,10 +10,23 @@ export const makePermissions = <T extends PermissionConfig>(
 };
 
 export const Permissions = makePermissions({
-  __test: ['select', 'update', 'delete'],
+  _farmer: [
+    'select',
+    'update',
+    'delete',
+    'owned-update',
+    'owned-delete',
+    'create',
+  ],
 } as const);
 
 export const rolePermissions: Record<UserRole, typeof Permissions> = {
-  admin: ['__test:select'],
-  user: ['__test:select'],
+  admin: [
+    '_farmer:delete',
+    '_farmer:update',
+    '_farmer:owned-delete',
+    '_farmer:owned-update',
+    '_farmer:create',
+  ],
+  user: ['_farmer:owned-delete', '_farmer:owned-update', '_farmer:create'],
 };

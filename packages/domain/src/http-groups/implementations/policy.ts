@@ -13,12 +13,7 @@ export const PolicyLive = HttpApiBuilder.group(
           const currentUser = yield* CurrentUser;
           const user = yield* currentUser.user;
 
-          const userPermissions = yield* Effect.succeed({
-            userId: user.userId,
-            permissions: user.permissions,
-          });
-
-          return userPermissions;
+          return user;
         }).pipe(Effect.orDie)
       );
     })

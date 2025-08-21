@@ -52,15 +52,19 @@ export const CurrentUserLive = Layer.succeed(CurrentUser, {
         })
       );
     }
+
+    const userRole = Schema.decodeUnknownSync(userRoleSchema)(
+      userSession.user.role
+    );
+
     const userPermissions = yield* Effect.sync(() =>
-      getPermissionsByRole(
-        Schema.decodeUnknownSync(userRoleSchema)(userSession.user.role)
-      )
+      getPermissionsByRole(userRole)
     );
 
     return User.make({
       userId: UserId.make(userSession.session.userId),
       sessionId: SessionId.make(userSession.session.id),
+      role: userRole,
       permissions: userPermissions,
     });
   }),

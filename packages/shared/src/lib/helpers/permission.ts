@@ -29,10 +29,12 @@ export const policy = <E, R>(
     const result = yield* predicate(parsedUser);
 
     if (!result) {
+      const fallbackMessage = `User ${parsedUser.userId} does not have permission to proceed with the action.`;
+
       yield* Effect.fail(
-        message !== undefined
-          ? new ForbiddenError({ message })
-          : new ForbiddenError()
+        new ForbiddenError({
+          message: message ?? fallbackMessage,
+        })
       );
     }
   });

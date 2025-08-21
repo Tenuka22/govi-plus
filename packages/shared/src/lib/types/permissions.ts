@@ -10,7 +10,13 @@ import type { permissionSchema } from '../schemas/permission';
 
 export type UserPermission = typeof permissionSchema.Type;
 
-export type PermissionAction = 'select' | 'delete' | 'update';
+export type PermissionAction =
+  | 'select'
+  | 'delete'
+  | 'update'
+  | 'create'
+  | 'owned-update'
+  | 'owned-delete';
 
 export type PermissionConfig = Record<string, readonly PermissionAction[]>;
 

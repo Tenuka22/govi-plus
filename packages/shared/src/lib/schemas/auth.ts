@@ -35,5 +35,6 @@ export const userRoleSchema = Schema.Literal('user', 'admin');
 export const userSchema = Schema.Struct({
   userId: UserId,
   sessionId: SessionId,
-  permissions: Schema.Set(permissionSchema),
+  role: userRoleSchema,
+  permissions: Schema.SetFromSelf(permissionSchema),
 });

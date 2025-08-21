@@ -1,4 +1,5 @@
 import { HttpApiEndpoint, HttpApiGroup } from '@effect/platform';
+import { ForbiddenError } from '@repo/shared/errors/auth';
 import {
   DrizzleEmptyInsertError,
   DrizzleInsertError,
@@ -17,12 +18,14 @@ export class FarmerGroup extends HttpApiGroup.make('farmer')
       .addSuccess(Schema.Array(farmerSchema))
       .setUrlParams(getReqFarmerURLParams)
       .addError(DrizzleSelectError)
+      .addError(ForbiddenError)
   )
   .add(
-    HttpApiEndpoint.get('post', '/')
+    HttpApiEndpoint.post('post', '/')
       .addSuccess(farmerSchema)
       .setPayload(postReqFarmerPayload)
       .addError(DrizzleEmptyInsertError)
+      .addError(ForbiddenError)
       .addError(DrizzleInsertError)
   )
-  .prefix('/') {}
+  .prefix('/farmer') {}

@@ -12,7 +12,6 @@ import type { Resend } from './resend';
 export class PolicyService extends Context.Tag('PolicyService')<
   PolicyService,
   {
-    readonly check: <E, R>(pol: Policy<E, R>) => Policy<E, R>;
     readonly require: (required: UserPermission, message?: string) => Policy;
     readonly all: <E, R>(
       ...policies: [Policy<E, R>, ...Policy<E, R>[]]
@@ -40,7 +39,6 @@ export class PolicyService extends Context.Tag('PolicyService')<
 >() {}
 
 export const PolicyServiceLive = Layer.succeed(PolicyService, {
-  check: <E, R>(pol: Policy<E, R>) => pol,
   require: (required: UserPermission, message?: string) =>
     policy((user) => Effect.succeed(user.permissions.has(required)), message),
   all,

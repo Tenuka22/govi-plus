@@ -11,6 +11,7 @@ import type {
   getReqFarmerURLParams,
   postReqFarmerPayload,
 } from '../../lib/schemas/payload';
+import { PolicyService } from '../../services/policy';
 import { farmers } from '../schema';
 
 const createFarmerFn = (payload: typeof postReqFarmerPayload.Type) =>
