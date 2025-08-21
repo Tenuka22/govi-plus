@@ -19,10 +19,10 @@ export class FarmerGroup extends HttpApiGroup.make('farmer')
       .addError(DrizzleSelectError)
   )
   .add(
-    HttpApiEndpoint.get('post', '/')
+    HttpApiEndpoint.post('post', '/')
       .addSuccess(farmerSchema)
       .setPayload(postReqFarmerPayload)
       .addError(DrizzleEmptyInsertError)
       .addError(DrizzleInsertError)
   )
-  .prefix('/') {}
+  .prefix('/farmer') {}
