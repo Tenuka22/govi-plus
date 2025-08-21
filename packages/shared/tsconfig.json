@@ -1,5 +1,11 @@
 {
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"],
+
   "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+
     "lib": ["ESNext"],
     "target": "ESNext",
     "module": "Preserve",
@@ -7,9 +13,9 @@
     "jsx": "react-jsx",
     "allowJs": true,
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
+    "allowImportingTsExtensions": false,
     "verbatimModuleSyntax": true,
-    "noEmit": true,
+    "noEmit": false,
     "strict": true,
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
