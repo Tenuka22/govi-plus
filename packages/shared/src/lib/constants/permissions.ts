@@ -22,11 +22,12 @@ export const Permissions = makePermissions({
 
 export const rolePermissions: Record<UserRole, typeof Permissions> = {
   admin: [
+    '_farmer:select',
     '_farmer:delete',
     '_farmer:update',
     '_farmer:owned-delete',
     '_farmer:owned-update',
     '_farmer:create',
   ],
-  user: ['_farmer:owned-delete', '_farmer:owned-update', '_farmer:create'],
+  user: ['_farmer:owned-delete', '_farmer:owned-update', '_farmer:select'],
 };
