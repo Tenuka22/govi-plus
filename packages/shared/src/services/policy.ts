@@ -1,18 +1,28 @@
 import type { HttpServerRequest } from '@effect/platform';
 import type { PgDrizzle } from '@effect/sql-drizzle/Pg';
-import { Context, Effect, Layer } from 'effect';
+import { Context, type Effect, Layer } from 'effect';
 import type { ForbiddenError } from '../errors/auth';
-import { all, any, policy, withPolicy } from '../lib/helpers/permission';
+import {
+  all,
+  any,
+  custom,
+  permission,
+  withPolicy,
+} from '../lib/helpers/permission';
 import type { Policy, UserPermission } from '../lib/types/permissions';
 import type { BetterAuth } from './auth';
 import type { ServerConfig } from './config';
-import type { CurrentUser } from './current-user';
+import type { CurrentUser, User } from './current-user';
 import type { Resend } from './resend';
 
 export class PolicyService extends Context.Tag('PolicyService')<
   PolicyService,
   {
     readonly require: (required: UserPermission, message?: string) => Policy;
+    readonly custom: <E, R>(
+      predicate: (user: User) => Effect.Effect<boolean, E, R>,
+      message?: string
+    ) => Policy<E, R>;
     readonly all: <E, R>(
       ...policies: [Policy<E, R>, ...Policy<E, R>[]]
     ) => Policy<E, R>;
@@ -39,9 +49,9 @@ export class PolicyService extends Context.Tag('PolicyService')<
 >() {}
 
 export const PolicyServiceLive = Layer.succeed(PolicyService, {
-  require: (required: UserPermission, message?: string) =>
-    policy((user) => Effect.succeed(user.permissions.has(required)), message),
+  require: permission,
   all,
   any,
   with: withPolicy,
+  custom,
 });
