@@ -9,8 +9,6 @@ import {
 } from '../../database/schema';
 import { FarmerId } from '../brands/database';
 import { UserId } from '../brands/user';
-import { EmailRegex } from '../regex';
-import { createRegexParseErrorHandler } from '../utils';
 
 export const farmerLocationSchema = Schema.Struct({
   lat: Schema.Number,
@@ -19,17 +17,11 @@ export const farmerLocationSchema = Schema.Struct({
   province: Schema.Literal(...provinceEnum.enumValues),
 });
 
-export const farmerSchema = Schema.Struct({
+export const farmerDataSchema = Schema.Struct({
   id: FarmerId,
   userId: UserId,
   name: Schema.NonEmptyTrimmedString,
-  email: Schema.NullOr(
-    Schema.NonEmptyTrimmedString.pipe(
-      Schema.pattern(EmailRegex, {
-        message: createRegexParseErrorHandler('Email'),
-      })
-    )
-  ),
+  email: Schema.NullOr(Schema.NonEmptyTrimmedString),
   phone: Schema.NonEmptyTrimmedString,
   address: Schema.NullOr(Schema.NonEmptyTrimmedString),
   location: farmerLocationSchema,
@@ -50,19 +42,53 @@ export const farmerSchema = Schema.Struct({
   updatedAt: Schema.NullOr(Schema.Date),
 });
 
-export const farmerStringSchema = Schema.Struct({
-  id: Schema.String,
-  userId: Schema.String,
-  name: Schema.String,
-  email: Schema.UndefinedOr(Schema.String),
-  phone: Schema.String,
-  address: Schema.UndefinedOr(Schema.String),
+export const farmerInsertSchema = Schema.Struct({
+  id: FarmerId,
+  userId: UserId,
+  name: Schema.NonEmptyTrimmedString,
+  email: Schema.UndefinedOr(Schema.NonEmptyTrimmedString),
+  phone: Schema.NonEmptyTrimmedString,
+  address: Schema.UndefinedOr(Schema.NonEmptyTrimmedString),
   location: farmerLocationSchema,
-  experienceLevel: Schema.UndefinedOr(Schema.String),
-  farmingMethods: Schema.Array(Schema.String),
-  communicationChannels: Schema.Array(Schema.String),
-  cropPreferences: Schema.Array(Schema.String),
-  isActive: Schema.UndefinedOr(Schema.BooleanFromString),
-  createdAt: Schema.UndefinedOr(Schema.DateFromString),
-  updatedAt: Schema.UndefinedOr(Schema.DateFromString),
+  experienceLevel: Schema.UndefinedOr(
+    Schema.Literal(...experienceLevelEnum.enumValues)
+  ),
+  farmingMethods: Schema.Array(
+    Schema.Union(Schema.Literal(...farmingMethodEnum.enumValues))
+  ),
+  communicationChannels: Schema.Array(
+    Schema.Literal(...communicationChannelEnum.enumValues)
+  ),
+  cropPreferences: Schema.Array(
+    Schema.Literal(...cropPreferenceEnum.enumValues)
+  ),
+  isActive: Schema.UndefinedOr(Schema.Boolean),
+  createdAt: Schema.UndefinedOr(Schema.Date),
+  updatedAt: Schema.UndefinedOr(Schema.Date),
 });
+
+export const deletedSchema = (
+  itemId: Schema.brand<typeof Schema.Any, string>
+) =>
+  Schema.Struct({
+    deletedItems: Schema.Array(itemId),
+    unDeletedItems: Schema.Array(
+      Schema.Struct({
+        itemId,
+        error: Schema.optional(Schema.String),
+      })
+    ),
+  });
+
+export const updatedSchema = (
+  itemId: Schema.brand<typeof Schema.Any, string>
+) =>
+  Schema.Struct({
+    updatedItems: Schema.Array(itemId),
+    unUpdatedItems: Schema.Array(
+      Schema.Struct({
+        itemId,
+        error: Schema.optional(Schema.String),
+      })
+    ),
+  });

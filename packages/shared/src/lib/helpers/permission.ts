@@ -59,6 +59,11 @@ export const any = <E, R>(
 export const permission = (requiredPermission: UserPermission): Policy =>
   policy((user) => Effect.succeed(user.permissions.has(requiredPermission)));
 
+export const custom = <E, R>(
+  predicate: (user: User) => Effect.Effect<boolean, E, R>,
+  message?: string
+) => policy(predicate, message);
+
 export const getPermissionsByRole = (role: UserRole): Set<UserPermission> => {
   return new Set(rolePermissions[role] ?? []);
 };

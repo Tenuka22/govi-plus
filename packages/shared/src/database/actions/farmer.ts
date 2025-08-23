@@ -1,6 +1,12 @@
 import { PgDrizzle } from '@effect/sql-drizzle/Pg';
-import { and, eq, type InferSelectModel, like, sql } from 'drizzle-orm';
-import type { PgColumn } from 'drizzle-orm/pg-core';
+import {
+  and,
+  arrayContains,
+  eq,
+  type InferSelectModel,
+  like,
+  sql,
+} from 'drizzle-orm';
 import { Context, Effect, Layer, Schema } from 'effect';
 import {
   DrizzleEmptyInsertError,
@@ -8,10 +14,15 @@ import {
   DrizzleSelectError,
 } from '../../errors/database';
 import { FarmerId } from '../../lib/brands/database';
-import { farmerSchema } from '../../lib/schemas/database';
-import type {
-  getReqFarmerURLParams,
-  postReqFarmerPayload,
+import {
+  farmerDataSchema,
+  farmerInsertSchema,
+} from '../../lib/schemas/database';
+import {
+  type getReqFarmerURLParams,
+  parsedGetReqFarmerURLParams,
+  type patchReqFarmerPayload,
+  type postReqFarmerPayload,
 } from '../../lib/schemas/payload';
 import { farmers } from '../schema';
 
@@ -19,7 +30,7 @@ const createFarmerFn = (payload: typeof postReqFarmerPayload.Type) =>
   Effect.gen(function* () {
     const drizzleClient = yield* PgDrizzle;
 
-    const parsedPayload = Schema.decodeUnknownSync(farmerSchema)(payload);
+    const parsedPayload = Schema.decodeUnknownSync(farmerInsertSchema)(payload);
     const farmerData = {
       ...parsedPayload,
       address: parsedPayload.address ?? undefined,
@@ -41,7 +52,7 @@ const createFarmerFn = (payload: typeof postReqFarmerPayload.Type) =>
       return yield* Effect.fail(new DrizzleEmptyInsertError());
     }
 
-    const parsedFarmer = Schema.decodeUnknownSync(farmerSchema)({
+    const parsedFarmer = Schema.decodeUnknownSync(farmerDataSchema)({
       ...farmer,
       id: FarmerId.make(farmer.id),
     });
@@ -49,10 +60,9 @@ const createFarmerFn = (payload: typeof postReqFarmerPayload.Type) =>
     return parsedFarmer;
   });
 
-const arrayContains = <T>(col: PgColumn, values: T[]) =>
-  sql`${col} @> ${values}::text[]`;
-
-const buildFarmerConditions = (payload: typeof getReqFarmerURLParams.Type) => {
+const buildFarmerConditions = (
+  payload: typeof parsedGetReqFarmerURLParams.Type
+) => {
   const conditions: ReturnType<typeof sql>[] = [];
 
   if (payload.ids && payload.ids.length > 0) {
@@ -78,19 +88,18 @@ const buildFarmerConditions = (payload: typeof getReqFarmerURLParams.Type) => {
   return conditions;
 };
 
-const buildArrayConditions = (payload: typeof getReqFarmerURLParams.Type) => {
+const buildArrayConditions = (
+  payload: typeof parsedGetReqFarmerURLParams.Type
+) => {
   const conditions: ReturnType<typeof sql>[] = [];
 
-  if (payload.cropPreferences && payload.cropPreferences.length > 0) {
+  if (payload.cropPreferences?.length) {
     conditions.push(
       arrayContains(farmers.cropPreferences, [...payload.cropPreferences])
     );
   }
 
-  if (
-    payload.communicationChannels &&
-    payload.communicationChannels.length > 0
-  ) {
+  if (payload.communicationChannels?.length) {
     conditions.push(
       arrayContains(farmers.communicationChannels, [
         ...payload.communicationChannels,
@@ -98,7 +107,7 @@ const buildArrayConditions = (payload: typeof getReqFarmerURLParams.Type) => {
     );
   }
 
-  if (payload.farmingMethods && payload.farmingMethods.length > 0) {
+  if (payload.farmingMethods?.length) {
     conditions.push(
       arrayContains(farmers.farmingMethods, [...payload.farmingMethods])
     );
@@ -111,12 +120,16 @@ const getFarmersFn = (payload: typeof getReqFarmerURLParams.Type) =>
   Effect.gen(function* () {
     const drizzleClient = yield* PgDrizzle;
 
-    const basicConditions = buildFarmerConditions(payload);
-    const arrayConditions = buildArrayConditions(payload);
+    const parsedPayload = Schema.decodeUnknownSync(parsedGetReqFarmerURLParams)(
+      payload
+    );
+
+    const basicConditions = buildFarmerConditions(parsedPayload);
+    const arrayConditions = buildArrayConditions(parsedPayload);
     const conditions = [...basicConditions, ...arrayConditions];
 
-    if (payload.isActive !== undefined) {
-      conditions.push(eq(farmers.isActive, payload.isActive));
+    if (parsedPayload.isActive !== null) {
+      conditions.push(eq(farmers.isActive, parsedPayload.isActive));
     }
 
     const query =
@@ -131,11 +144,153 @@ const getFarmersFn = (payload: typeof getReqFarmerURLParams.Type) =>
       try: async () => query.execute(),
       catch: (e) =>
         e instanceof Error
-          ? new DrizzleSelectError({ filters: payload, message: e.message })
-          : new DrizzleSelectError({ filters: payload }),
+          ? new DrizzleSelectError({
+              filters: parsedPayload,
+              message: e.message,
+            })
+          : new DrizzleSelectError({ filters: parsedPayload }),
     });
 
     return filteredFarmers as InferSelectModel<typeof farmers>[];
+  });
+
+const updateFarmersFn = (payload: typeof patchReqFarmerPayload.Type) =>
+  Effect.gen(function* () {
+    const drizzleClient = yield* PgDrizzle;
+
+    const parsedFarmerData = Schema.decodeUnknownSync(
+      Schema.partial(farmerDataSchema)
+    )(payload.data);
+
+    const farmerData = {
+      ...parsedFarmerData,
+      address: parsedFarmerData.address ?? undefined,
+      farmingMethods: [...(parsedFarmerData.farmingMethods ?? [])],
+      communicationChannels: [
+        ...(parsedFarmerData.communicationChannels ?? []),
+      ],
+      cropPreferences: [...(parsedFarmerData.cropPreferences ?? [])],
+    };
+
+    const failedToUpdate: { itemId: typeof FarmerId.Type; error: string }[] =
+      [];
+
+    const updateResults: {
+      itemId: typeof FarmerId.Type;
+      result: 'success' | 'error';
+    }[] = yield* Effect.all(
+      payload.ids.map((id) =>
+        Effect.tryPromise({
+          try: async () =>
+            drizzleClient
+              .update(farmers)
+              .set(farmerData)
+              .where(eq(farmers.id, id))
+              .returning()
+              .then((v) =>
+                v[0]
+                  ? { itemId: id, result: 'success' as const }
+                  : { itemId: id, result: 'error' as const }
+              ),
+          catch: (e) => {
+            failedToUpdate.push({
+              itemId: id,
+              error:
+                e instanceof Error
+                  ? e.message
+                  : `Unknown error updating farmer ${id}`,
+            });
+            return { itemId: id, result: 'error' as const };
+          },
+        }).pipe(
+          Effect.catchAll(() =>
+            Effect.succeed({ itemId: id, result: 'error' as const })
+          )
+        )
+      )
+    );
+
+    const successfullyUpdated = updateResults
+      .map((r) => {
+        if (r.result === 'error') {
+          failedToUpdate.push({
+            itemId: r.itemId,
+            error: "Server didn't return the updated farmer",
+          });
+          return null;
+        }
+        return r.itemId;
+      })
+      .filter((id): id is ReturnType<typeof FarmerId.make> => !!id);
+
+    return {
+      updatedItems: successfullyUpdated,
+      unUpdatedItems: failedToUpdate,
+    };
+  });
+
+const deleteFarmersFn = (payload: { ids: (typeof FarmerId.Type)[] }) =>
+  Effect.gen(function* () {
+    const drizzleClient = yield* PgDrizzle;
+
+    const failedToDelete: { itemId: typeof FarmerId.Type; error: string }[] =
+      [];
+
+    const deleteResults: {
+      itemId: typeof FarmerId.Type;
+      result: 'success' | 'error';
+    }[] = yield* Effect.all(
+      payload.ids.map((id) =>
+        Effect.tryPromise({
+          try: async () =>
+            drizzleClient
+              .delete(farmers)
+              .where(eq(farmers.id, id))
+              .returning()
+              .then((v) =>
+                v[0]
+                  ? {
+                      itemId: id,
+                      result: 'success' as const,
+                    }
+                  : { itemId: id, result: 'error' as const }
+              ),
+          catch: (e) => {
+            failedToDelete.push({
+              itemId: id,
+              error:
+                e instanceof Error
+                  ? e.message
+                  : `Unknown error while deleting farmer ${id}`,
+            });
+            return { itemId: id, result: 'error' as const };
+          },
+        }).pipe(
+          Effect.catchAll(() =>
+            Effect.succeed({ itemId: id, result: 'error' as const })
+          )
+        )
+      )
+    );
+
+    const successfullyDeleted = deleteResults
+      .map((r) => {
+        if (r.result === 'error') {
+          failedToDelete.push({
+            itemId: r.itemId,
+            error: "Server didn't return the deleted farmer",
+          });
+          return null;
+        }
+        return r.itemId;
+      })
+      .filter((v) => v !== null)
+      .filter((id): id is ReturnType<typeof FarmerId.make> => !!id);
+
+    return {
+      deletedItems: successfullyDeleted,
+      unDeletedItems: failedToDelete,
+    };
   });
 
 export class FarmerActions extends Context.Tag('FarmerActions')<
@@ -143,10 +298,14 @@ export class FarmerActions extends Context.Tag('FarmerActions')<
   {
     createFarmer: typeof createFarmerFn;
     getFarmers: typeof getFarmersFn;
+    updateFarmers: typeof updateFarmersFn;
+    deleteFarmers: typeof deleteFarmersFn;
   }
 >() {}
 
 export const FarmerActionImplementations = Layer.succeed(FarmerActions, {
   createFarmer: createFarmerFn,
   getFarmers: getFarmersFn,
+  updateFarmers: updateFarmersFn,
+  deleteFarmers: deleteFarmersFn,
 });
