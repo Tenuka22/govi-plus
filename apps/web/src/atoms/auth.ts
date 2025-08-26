@@ -1,10 +1,13 @@
-import type {
-  emailLoginFormSchema,
-  socialLoginFormSchema,
+'use client';
+import { UserId } from '@repo/shared/lib/brands/user';
+import {
+  type emailLoginFormSchema,
+  type socialLoginFormSchema,
+  userProfileSchema,
 } from '@repo/shared/lib/schemas/auth';
 import { withToast } from '@repo/shared/lib/toasted-atoms';
 import { BetterAuth } from '@repo/shared/services/auth-client';
-import { Effect } from 'effect';
+import { Effect, Schema } from 'effect';
 import { webRuntimeAtom } from '@/runtimes/web-runtime';
 
 const defaultAuthFailMessage =
@@ -14,19 +17,20 @@ export const signInFnAtom = webRuntimeAtom.fn(
   Effect.fnUntraced(
     function* (args: typeof emailLoginFormSchema.Type) {
       const betterAuth = yield* BetterAuth;
-      const caller = yield* betterAuth.caller;
+      const client = yield* betterAuth.getClient;
 
-      yield* Effect.logDebug('Attempting sign in with args:', args);
+      const hanlder = betterAuth.handleErrors;
 
-      const data = yield* caller((c) => c.signIn.email(args));
+      const call = Effect.promise(async () => client.signIn.email(args));
 
-      yield* Effect.logDebug('Sign in successful for user:', args.email);
+      const data = yield* hanlder(call);
+
       return data;
     },
     withToast({
       onFailure: (err, args) => {
-        return err?._tag === 'BetterAuthApiError'
-          ? err.message
+        return err?._tag === 'Some'
+          ? err.value.message
           : `Sign-in failed for ${args.email}. ${defaultAuthFailMessage}`;
       },
 
@@ -47,14 +51,20 @@ export const signUpFnAtom = webRuntimeAtom.fn(
   Effect.fnUntraced(
     function* (args: typeof emailLoginFormSchema.Type) {
       const betterAuth = yield* BetterAuth;
-      const caller = yield* betterAuth.caller;
+      const client = yield* betterAuth.getClient;
 
-      return yield* caller((c) => c.signUp.email(args));
+      const hanlder = betterAuth.handleErrors;
+
+      const call = Effect.promise(async () => client.signUp.email(args));
+
+      const data = yield* hanlder(call);
+
+      return data;
     },
     withToast({
       onFailure: (err) =>
-        err?._tag === 'BetterAuthApiError'
-          ? err.message
+        err?._tag === 'Some'
+          ? err.value.message
           : `Sign-up failed. ${defaultAuthFailMessage}`,
 
       onSuccess: (res, args) => {
@@ -74,14 +84,18 @@ export const socialLoginFnAtom = webRuntimeAtom.fn(
   Effect.fnUntraced(
     function* (args: typeof socialLoginFormSchema.Type) {
       const betterAuth = yield* BetterAuth;
-      const caller = yield* betterAuth.caller;
+      const client = yield* betterAuth.getClient;
+
+      const hanlder = betterAuth.handleErrors;
+
+      const call = Effect.promise(async () => client.signIn.social(args));
 
       yield* Effect.logDebug(
         'Attempting social sign in with provider:',
         args.provider
       );
 
-      const data = yield* caller((c) => c.signIn.social(args));
+      const data = yield* hanlder(call);
 
       yield* Effect.logDebug(
         'Social connection successful, User will be redirected'
@@ -91,8 +105,8 @@ export const socialLoginFnAtom = webRuntimeAtom.fn(
     },
     withToast({
       onFailure: (err, args) =>
-        err?._tag === 'BetterAuthApiError'
-          ? err.message
+        err?._tag === 'Some'
+          ? err.value.message
           : `Sign-in with ${args.provider} failed. ${defaultAuthFailMessage}`,
 
       onSuccess: (__, args) => {
@@ -107,14 +121,45 @@ export const socialLoginFnAtom = webRuntimeAtom.fn(
 export const authUserSessionAtom = webRuntimeAtom.atom(
   Effect.gen(function* () {
     const betterAuth = yield* BetterAuth;
-    const caller = yield* betterAuth.caller;
+    const client = yield* betterAuth.getClient;
+    const hanlder = betterAuth.handleErrors;
 
     yield* Effect.logDebug('Attempting to fetch user.');
+    const call = Effect.promise(async () => client.getSession());
+    const userSession = yield* hanlder(call);
 
-    const userSession = yield* caller((c) => c.getSession());
+    if (!userSession) {
+      return null;
+    }
+
+    const parsedUser = Schema.decodeUnknownEither(userProfileSchema)({
+      ...userSession?.user,
+      id: UserId.make(userSession?.user.id || 'unknown'),
+    });
+
+    console.log(parsedUser);
 
     yield* Effect.logDebug('User fetched successfully');
 
-    return userSession;
+    yield* Effect.logError('se', userSession);
+
+    return { ...userSession, user: parsedUser };
+  })
+);
+
+export const authProfileEditUserAtom = webRuntimeAtom.atom(
+  Effect.gen(function* () {
+    const betterAuth = yield* BetterAuth;
+    const client = yield* betterAuth.getClient;
+    const hanlder = betterAuth.handleErrors;
+
+    yield* Effect.logDebug('Attempting to update user.');
+
+    const call = Effect.promise(async () => client.updateUser());
+    const updateStatus = yield* hanlder(call);
+
+    yield* Effect.logDebug('User fetched successfully');
+
+    return updateStatus;
   })
 );

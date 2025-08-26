@@ -127,7 +127,7 @@ const NavUser = () => {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/auth/profile">
+                <Link href="/app/profile/user">
                   <BadgeCheck />
                   Profile
                 </Link>

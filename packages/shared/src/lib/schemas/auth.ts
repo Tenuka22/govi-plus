@@ -27,12 +27,40 @@ export const errorSchema = Schema.Struct({
 
 export const authResponseSchema = Schema.Struct({
   data: Schema.optional(Schema.Unknown),
-  error: Schema.optional(Schema.partial(errorSchema)),
+  error: Schema.optional(Schema.Unknown),
 });
 
 export const userRoleSchema = Schema.Literal('user', 'admin');
 
-export const userSchema = Schema.Struct({
+export const userProfileSchema = Schema.Struct({
+  id: UserId,
+  name: Schema.NonEmptyString,
+  email: Schema.NonEmptyTrimmedString.pipe(
+    Schema.pattern(EmailRegex, {
+      message: createRegexParseErrorHandler('Email'),
+    })
+  ),
+  emailVerified: Schema.Boolean,
+  image: Schema.NullishOr(Schema.String),
+  createdAt: Schema.Date,
+  updatedAt: Schema.Date,
+  role: Schema.NullishOr(userRoleSchema),
+  banned: Schema.NullishOr(Schema.Boolean),
+  banReason: Schema.NullishOr(Schema.String),
+  banExpires: Schema.NullishOr(Schema.Date),
+});
+
+export const userProfileFormSchema = Schema.Struct({
+  email: Schema.NonEmptyTrimmedString.pipe(
+    Schema.pattern(EmailRegex, {
+      message: createRegexParseErrorHandler('Email'),
+    })
+  ),
+  password: Schema.NonEmptyTrimmedString,
+  name: Schema.String,
+});
+
+export const currentUserSchema = Schema.Struct({
   userId: UserId,
   sessionId: SessionId,
   role: userRoleSchema,

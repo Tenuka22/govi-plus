@@ -1,7 +1,9 @@
+import { HttpApiSchema, Multipart } from '@effect/platform';
 import { Schema } from 'effect';
 import { FarmerId } from '../brands/database';
 import { UserId } from '../brands/user';
 import { farmerDataSchema, farmerInsertSchema } from './database';
+import { fileUploadConfigSchema } from './file';
 
 export const getReqFarmerURLParams = Schema.Struct({
   ids: Schema.optional(Schema.Array(FarmerId)),
@@ -28,6 +30,22 @@ export const parsedGetReqFarmerURLParams = Schema.Struct({
 });
 
 export const postReqFarmerPayload = farmerInsertSchema.omit('id', 'userId');
+
+export const postTypeReqFilePayload = Schema.Struct({
+  mimeType: Schema.NonEmptyTrimmedString,
+});
+
+export const postPathReqFilePayload = Schema.Struct({
+  fileName: Schema.NonEmptyTrimmedString,
+  userId: UserId,
+  config: fileUploadConfigSchema,
+});
+
+export const postUploadReqFilePayload = HttpApiSchema.Multipart(
+  Schema.Struct({
+    files: Multipart.FilesSchema,
+  })
+);
 
 export const deleteReqEntityPayload = (
   itemId: Schema.brand<typeof Schema.Any, string>

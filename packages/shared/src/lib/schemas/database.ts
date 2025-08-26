@@ -1,4 +1,5 @@
 import { Schema } from 'effect';
+import { fileTypeEnum } from '../../database/groups/file-schema';
 import {
   communicationChannelEnum,
   cropPreferenceEnum,
@@ -7,7 +8,7 @@ import {
   farmingMethodEnum,
   provinceEnum,
 } from '../../database/schema';
-import { FarmerId } from '../brands/database';
+import { FarmerId, FileId } from '../brands/database';
 import { UserId } from '../brands/user';
 
 export const farmerLocationSchema = Schema.Struct({
@@ -40,6 +41,45 @@ export const farmerDataSchema = Schema.Struct({
   isActive: Schema.NullOr(Schema.Boolean),
   createdAt: Schema.NullOr(Schema.Date),
   updatedAt: Schema.NullOr(Schema.Date),
+});
+
+export const fileTypeSchema = Schema.Literal(...fileTypeEnum.enumValues);
+
+export const fileDataSchema = Schema.Struct({
+  id: FileId,
+  fileName: Schema.String,
+  originalFileName: Schema.String,
+  fileSize: Schema.Number,
+  mimeType: Schema.String,
+  fileType: fileTypeSchema,
+  uploadPath: Schema.String,
+  url: Schema.String,
+  uploadedAt: Schema.Date,
+  uploadedBy: UserId,
+  metadata: Schema.NullOr(
+    Schema.Record({
+      key: Schema.String,
+      value: Schema.Unknown,
+    })
+  ),
+});
+
+export const fileInsertSchema = Schema.Struct({
+  fileName: Schema.String,
+  originalFileName: Schema.String,
+  fileSize: Schema.Number,
+  mimeType: Schema.String,
+  fileType: fileTypeSchema,
+  uploadPath: Schema.String,
+  url: Schema.String,
+  uploadedAt: Schema.Date,
+  uploadedBy: UserId,
+  metadata: Schema.UndefinedOr(
+    Schema.Record({
+      key: Schema.String,
+      value: Schema.Unknown,
+    })
+  ),
 });
 
 export const farmerInsertSchema = Schema.Struct({

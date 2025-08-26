@@ -1,10 +1,10 @@
-import { Effect } from 'effect';
+import { Cause, Effect, type Option } from 'effect';
 import { toast } from 'sonner';
 
 type ToastOptions<A, E, Args extends readonly unknown[]> = {
   onWaiting: string | ((...args: Args) => string);
   onSuccess: string | ((a: A, ...args: Args) => string);
-  onFailure: string | ((error: E | undefined, ...args: Args) => string);
+  onFailure: string | ((error: Option.Option<E>, ...args: Args) => string);
 };
 
 export const withToast = <A, E, Args extends readonly unknown[], R>(
@@ -16,24 +16,21 @@ export const withToast = <A, E, Args extends readonly unknown[], R>(
         ? options.onWaiting
         : options.onWaiting(...args)
     );
-
     return yield* self.pipe(
-      Effect.tap((a) =>
-        Effect.sync(() => {
-          toast.success(
-            typeof options.onSuccess === 'string'
-              ? options.onSuccess
-              : options.onSuccess(a, ...args),
-            { id: toastId }
-          );
-        })
-      ),
-      Effect.catchAll((err) =>
+      Effect.tap((a) => {
+        toast.success(
+          typeof options.onSuccess === 'string'
+            ? options.onSuccess
+            : options.onSuccess(a, ...args),
+          { id: toastId }
+        );
+      }),
+      Effect.tapErrorCause((cause) =>
         Effect.sync(() => {
           toast.error(
             typeof options.onFailure === 'string'
               ? options.onFailure
-              : options.onFailure(err, ...args),
+              : options.onFailure(Cause.failureOption(cause), ...args),
             { id: toastId }
           );
         })

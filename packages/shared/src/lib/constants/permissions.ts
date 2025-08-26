@@ -18,6 +18,14 @@ export const Permissions = makePermissions({
     'owned-delete',
     'create',
   ],
+  _file: [
+    'select',
+    'update',
+    'delete',
+    'owned-update',
+    'owned-delete',
+    'create',
+  ],
 } as const);
 
 export const rolePermissions: Record<UserRole, typeof Permissions> = {
@@ -28,6 +36,19 @@ export const rolePermissions: Record<UserRole, typeof Permissions> = {
     '_farmer:owned-delete',
     '_farmer:owned-update',
     '_farmer:create',
+    '_file:select',
+    '_file:delete',
+    '_file:update',
+    '_file:owned-delete',
+    '_file:owned-update',
+    '_file:create',
   ],
-  user: ['_farmer:owned-delete', '_farmer:owned-update', '_farmer:select'],
+  user: [
+    '_farmer:owned-delete',
+    '_farmer:owned-update',
+    '_farmer:select',
+    '_file:select',
+    '_file:create',
+    '_file:owned-delete',
+  ],
 };

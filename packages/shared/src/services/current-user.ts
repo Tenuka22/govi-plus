@@ -5,12 +5,12 @@ import { type ConfigError, Context, Effect, Layer, Schema } from 'effect';
 import { type BetterAuthApiError, UnauthorizedError } from '../errors/auth';
 import { SessionId, UserId } from '../lib/brands/user';
 import { getPermissionsByRole } from '../lib/helpers/permission';
-import { userRoleSchema, userSchema } from '../lib/schemas/auth';
+import { currentUserSchema, userRoleSchema } from '../lib/schemas/auth';
 import { BetterAuth } from './auth';
 import type { ServerConfig } from './config';
 import type { Resend } from './resend';
 
-export class User extends Schema.Class<User>('User')(userSchema) {}
+export class User extends Schema.Class<User>('User')(currentUserSchema) {}
 
 export class CurrentUser extends Context.Tag('CurrentUser')<
   CurrentUser,

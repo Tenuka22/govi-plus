@@ -4,7 +4,7 @@ import { ForbiddenError } from '../../errors/auth';
 import { CurrentUser } from '../../services/current-user';
 import { SessionId, UserId } from '../brands/user';
 import { rolePermissions } from '../constants/permissions';
-import { userSchema } from '../schemas/auth';
+import { currentUserSchema } from '../schemas/auth';
 import type { User, UserRole } from '../types/auth';
 import type { Policy, UserPermission } from '../types/permissions';
 
@@ -20,7 +20,7 @@ export const policy = <E, R>(
       )
     );
 
-    const parsedUser = Schema.decodeUnknownSync(userSchema)({
+    const parsedUser = Schema.decodeUnknownSync(currentUserSchema)({
       ...user,
       userId: UserId.make(user.userId),
       sessionId: SessionId.make(user.sessionId),

@@ -8,8 +8,8 @@ export class BetterAuthApiError extends Schema.TaggedError<BetterAuthApiError>(
 )('BetterAuthApiError', errorSchema) {}
 
 export class BetterAuthApiClientError extends Schema.TaggedError<BetterAuthApiError>(
-  'BetterAuthApiError'
-)('BetterAuthApiError', errorSchema) {}
+  'BetterAuthApiClientError'
+)('BetterAuthApiClientError', errorSchema) {}
 
 export class UnauthorizedError extends Schema.TaggedError<UnauthorizedError>(
   'UnauthorizedError'

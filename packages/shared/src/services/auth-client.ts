@@ -12,7 +12,6 @@ const getAuthClient = Effect.gen(function* () {
   const webConfig = yield* WebConfig;
   const env = yield* webConfig.getEnv;
   const SERVER_URL = env.NEXT_PUBLIC_SERVER_URL;
-
   return yield* Effect.succeed(
     createAuthClient({
       baseURL: SERVER_URL,
@@ -23,74 +22,63 @@ const getAuthClient = Effect.gen(function* () {
 });
 
 type AuthClient = Effect.Effect.Success<typeof getAuthClient>;
-
 type AuthClientErrorCodes = AuthClient['$ERROR_CODES'];
-
 export type AuthErrorCodes = AuthClientErrorCodes & ServerAuthErrorCodes;
+
+const handleErrors = <S extends { data: unknown; error: unknown }, E, R>(
+  authCall: Effect.Effect<S, E, R>
+) => {
+  return authCall.pipe(
+    Effect.map((v) => v),
+    Effect.flatMap((res) => {
+      const response = Schema.decodeUnknownEither(authResponseSchema, {
+        onExcessProperty: 'preserve',
+      })(res);
+
+      if (Either.isLeft(response)) {
+        return Effect.succeed(null);
+      }
+
+      const parsedServerResponse = response.right;
+      const error = parsedServerResponse.error;
+
+      if (error) {
+        let errorMessage =
+          'Unknown error occurred in an auth function. Retry and contact the administration if error persists.';
+
+        const parsedError = Schema.decodeUnknownSync(errorSchema, {
+          onExcessProperty: 'preserve',
+        })(error);
+
+        if (parsedError.code && parsedError.code in authErrorCodeMessages) {
+          errorMessage =
+            authErrorCodeMessages[
+              parsedError.code as keyof AuthClientErrorCodes
+            ].en;
+        }
+
+        return Effect.fail(
+          new BetterAuthApiClientError({ ...error, message: errorMessage })
+        );
+      }
+
+      return Effect.succeed(parsedServerResponse.data as S['data']);
+    })
+  );
+};
 
 export class BetterAuth extends Context.Tag('ClientAuth')<
   BetterAuth,
   {
     readonly getClient: Effect.Effect<AuthClient, ConfigError, WebConfig>;
-    readonly caller: Effect.Effect<
-      <TData, TError, A extends { data: TData; error: TError }>(
-        f: (client: AuthClient, signal: AbortSignal) => Promise<A>
-      ) => Effect.Effect<A['data'], BetterAuthApiClientError, never>,
-      ConfigError,
-      WebConfig
-    >;
+    readonly handleErrors: typeof handleErrors;
   }
 >() {}
 
-export const BetterAuthALive = Layer.succeed(BetterAuth, {
+export const BetterAuthLive = Layer.succeed(BetterAuth, {
   getClient: Effect.gen(function* () {
     const client = yield* getAuthClient;
     return client;
   }),
-  caller: Effect.gen(function* () {
-    const auth = yield* getAuthClient;
-
-    const call = <TData, TError, A extends { data: TData; error: TError }>(
-      f: (client: typeof auth, signal: AbortSignal) => Promise<A>
-    ) =>
-      Effect.tryPromise({
-        try: (signal) => f(auth, signal),
-        catch: (error) =>
-          new BetterAuthApiClientError(
-            Schema.decodeUnknownSync(errorSchema)(error)
-          ),
-      }).pipe(
-        Effect.flatMap((res) => {
-          const response = Schema.decodeUnknownEither(authResponseSchema, {
-            onExcessProperty: 'preserve',
-          })(res);
-
-          if (Either.isLeft(response)) {
-            return Effect.succeed(res as unknown as A['data']);
-          }
-
-          const parsedServerResponse = response.right;
-          const error = parsedServerResponse.error;
-
-          if (error) {
-            let errorMessage =
-              'Unknown error occured in an auth function. Retry and contact the administration if error persists.';
-
-            if (error.code && error.code in authErrorCodeMessages) {
-              errorMessage =
-                authErrorCodeMessages[error.code as keyof AuthClientErrorCodes]
-                  .en;
-            }
-
-            return Effect.fail(
-              new BetterAuthApiClientError({ ...error, message: errorMessage })
-            );
-          }
-
-          return Effect.succeed(parsedServerResponse.data as A['data']);
-        })
-      );
-
-    return call;
-  }),
+  handleErrors,
 });
