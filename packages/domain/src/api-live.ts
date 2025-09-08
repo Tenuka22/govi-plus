@@ -2,6 +2,7 @@ import { HttpApiBuilder } from '@effect/platform';
 import { Layer } from 'effect';
 import { DomainApi } from './domain';
 import { BetterAuthLive } from './http-groups/implementations/auth';
+import { ClientGroupLive } from './http-groups/implementations/client';
 import { FarmerGroupLive } from './http-groups/implementations/farmer';
 import { HeathGroupLive } from './http-groups/implementations/health';
 import { PolicyLive } from './http-groups/implementations/policy';
@@ -10,7 +11,8 @@ const ApiImplementations = Layer.mergeAll(
   HeathGroupLive,
   BetterAuthLive,
   FarmerGroupLive,
-  PolicyLive
+  PolicyLive,
+  ClientGroupLive
 );
 
 export const ApiLive = HttpApiBuilder.api(DomainApi).pipe(

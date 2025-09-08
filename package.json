@@ -18,7 +18,9 @@
     "db:generate": "turbo -F server db:generate",
     "db:migrate": "turbo -F server db:migrate"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.13"
+  },
   "devDependencies": {
     "turbo": "^2.5.4",
     "@biomejs/biome": "2.1.2",

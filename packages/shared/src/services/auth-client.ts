@@ -1,4 +1,8 @@
-import { adminClient, jwtClient } from 'better-auth/client/plugins';
+import {
+  adminClient,
+  jwtClient,
+  passkeyClient,
+} from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 import { Context, Effect, Either, Layer, Schema } from 'effect';
 import type { ConfigError } from 'effect/ConfigError';
@@ -17,7 +21,7 @@ const getAuthClient = Effect.gen(function* () {
     createAuthClient({
       baseURL: SERVER_URL,
       basePath: '/auth',
-      plugins: [adminClient(), jwtClient()],
+      plugins: [passkeyClient(), adminClient(), jwtClient()],
     })
   );
 });
@@ -42,6 +46,67 @@ export class BetterAuth extends Context.Tag('ClientAuth')<
   }
 >() {}
 
+const createBetterAuthApiError = (
+  errorObj: unknown,
+  fallbackMessage: string
+): BetterAuthApiClientError => {
+  let errorMessage = fallbackMessage;
+
+  if (typeof errorObj === 'object' && errorObj && 'code' in errorObj) {
+    const errorCode = errorObj.code;
+    if (typeof errorCode === 'string' && errorCode in authErrorCodeMessages) {
+      errorMessage =
+        authErrorCodeMessages[errorCode as keyof typeof authErrorCodeMessages]
+          .en;
+    }
+  }
+
+  return new BetterAuthApiClientError({
+    ...(typeof errorObj === 'object' ? errorObj : {}),
+    message: errorMessage,
+  });
+};
+
+const processAuthResponse = <TData, TError>(res: {
+  data: TData;
+  error: TError | null;
+}): Effect.Effect<TData, BetterAuthApiClientError, never> => {
+  const { data, error: errorResponse } = res;
+
+  if (errorResponse) {
+    const errorMessage =
+      'Unknown error occurred in an auth function. Retry and contact the administration if error persists.';
+    const authError = createBetterAuthApiError(errorResponse, errorMessage);
+    return Effect.fail(authError);
+  }
+
+  return Effect.succeed(data);
+};
+
+const processResponse = <TData>(
+  res: unknown
+): Effect.Effect<TData, BetterAuthApiClientError, never> => {
+  const response = Schema.decodeUnknownEither(authResponseSchema, {
+    onExcessProperty: 'preserve',
+  })(res);
+
+  if (Either.isLeft(response)) {
+    return Effect.succeed(res as unknown as TData);
+  }
+
+  const parsedServerResponse = response.right;
+  const serverError = parsedServerResponse.error;
+
+  if (serverError) {
+    const errorMessage =
+      'Unknown error occurred in an auth function. Retry and contact the administration if error persists.';
+    const authError = createBetterAuthApiError(serverError, errorMessage);
+    return Effect.fail(authError);
+  }
+
+  return Effect.succeed(parsedServerResponse.data as TData);
+};
+
 export const BetterAuthALive = Layer.succeed(BetterAuth, {
   getClient: Effect.gen(function* () {
     const client = yield* getAuthClient;
@@ -49,48 +114,31 @@ export const BetterAuthALive = Layer.succeed(BetterAuth, {
   }),
   caller: Effect.gen(function* () {
     const auth = yield* getAuthClient;
-
     const call = <TData, TError, A extends { data: TData; error: TError }>(
       f: (client: typeof auth, signal: AbortSignal) => Promise<A>
     ) =>
       Effect.tryPromise({
         try: (signal) => f(auth, signal),
-        catch: (error) =>
+        catch: (unknownError) =>
           new BetterAuthApiClientError(
-            Schema.decodeUnknownSync(errorSchema)(error)
+            Schema.decodeUnknownSync(errorSchema)(unknownError)
           ),
       }).pipe(
         Effect.flatMap((res) => {
-          const response = Schema.decodeUnknownEither(authResponseSchema, {
-            onExcessProperty: 'preserve',
-          })(res);
-
-          if (Either.isLeft(response)) {
-            return Effect.succeed(res as unknown as A['data']);
-          }
-
-          const parsedServerResponse = response.right;
-          const error = parsedServerResponse.error;
-
-          if (error) {
-            let errorMessage =
-              'Unknown error occured in an auth function. Retry and contact the administration if error persists.';
-
-            if (error.code && error.code in authErrorCodeMessages) {
-              errorMessage =
-                authErrorCodeMessages[error.code as keyof AuthClientErrorCodes]
-                  .en;
-            }
-
-            return Effect.fail(
-              new BetterAuthApiClientError({ ...error, message: errorMessage })
+          if (
+            res &&
+            typeof res === 'object' &&
+            'data' in res &&
+            'error' in res
+          ) {
+            return processAuthResponse(
+              res as { data: TData; error: TError | null }
             );
           }
 
-          return Effect.succeed(parsedServerResponse.data as A['data']);
+          return processResponse<TData>(res);
         })
       );
-
     return call;
   }),
 });

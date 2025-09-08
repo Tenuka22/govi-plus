@@ -4,7 +4,7 @@ import type { PgDrizzle } from '@effect/sql-drizzle/Pg';
 import { type ConfigError, Context, Effect, Layer, Schema } from 'effect';
 import { type BetterAuthApiError, UnauthorizedError } from '../errors/auth';
 import { SessionId, UserId } from '../lib/brands/user';
-import { getPermissionsByRole } from '../lib/helpers/permission';
+import { getPermissionsByRole } from '../lib/permission/helpers';
 import { userRoleSchema, userSchema } from '../lib/schemas/auth';
 import { BetterAuth } from './auth';
 import type { ServerConfig } from './config';

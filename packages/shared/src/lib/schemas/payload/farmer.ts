@@ -1,5 +1,5 @@
 import { Schema } from 'effect';
-import { farmerStringSchema } from './database';
+import { farmerStringSchema } from '../database/farmer';
 
 export const getReqFarmerURLParams = Schema.Struct({
   ids: Schema.optional(Schema.Array(Schema.String)),

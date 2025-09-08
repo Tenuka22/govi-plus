@@ -7,12 +7,12 @@ import {
   DrizzleInsertError,
   DrizzleSelectError,
 } from '../../errors/database';
-import { FarmerId } from '../../lib/brands/database';
-import { farmerSchema } from '../../lib/schemas/database';
+import { FarmerId } from '../../lib/brands/database/farmer';
+import { farmerSchema } from '../../lib/schemas/database/farmer';
 import type {
   getReqFarmerURLParams,
   postReqFarmerPayload,
-} from '../../lib/schemas/payload';
+} from '../../lib/schemas/payload/farmer';
 import { farmers } from '../schema';
 
 const createFarmerFn = (payload: typeof postReqFarmerPayload.Type) =>

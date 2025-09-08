@@ -2,7 +2,7 @@ import type { AuthErrorCodes } from '../../services/auth-client';
 
 type ErrorTypes = Record<keyof AuthErrorCodes, { en: string }>;
 
-export const authErrorCodeMessages: ErrorTypes = {
+export const authErrorCodeMessages = {
   USER_NOT_FOUND: { en: 'No account was found with the provided credentials.' },
   FAILED_TO_CREATE_USER: {
     en: 'We could not create your account. Please try again later.',
@@ -82,4 +82,10 @@ export const authErrorCodeMessages: ErrorTypes = {
   YOU_ARE_NOT_ALLOWED_TO_UPDATE_USERS: {
     en: 'You are not authorized to update user accounts.',
   },
-};
+  YOU_ARE_NOT_ALLOWED_TO_GET_USER: {
+    en: 'You are not authorized to get user account.',
+  },
+  YOU_CANNOT_REMOVE_YOURSELF: {
+    en: 'You are not authorized to remove yourself.',
+  },
+} satisfies ErrorTypes;

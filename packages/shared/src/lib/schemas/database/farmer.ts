@@ -6,11 +6,11 @@ import {
   experienceLevelEnum,
   farmingMethodEnum,
   provinceEnum,
-} from '../../database/schema';
-import { FarmerId } from '../brands/database';
-import { UserId } from '../brands/user';
-import { EmailRegex } from '../regex';
-import { createRegexParseErrorHandler } from '../utils';
+} from '../../../database/schema';
+import { FarmerId } from '../../brands/database/farmer';
+import { UserId } from '../../brands/user';
+import { EmailRegex } from '../../regex';
+import { createRegexParseErrorHandler } from '../../utils';
 
 export const farmerLocationSchema = Schema.Struct({
   lat: Schema.Number,

@@ -2,7 +2,7 @@ import type { HttpServerRequest } from '@effect/platform';
 import type { PgDrizzle } from '@effect/sql-drizzle/Pg';
 import { Context, Effect, Layer } from 'effect';
 import type { ForbiddenError } from '../errors/auth';
-import { all, any, policy, withPolicy } from '../lib/helpers/permission';
+import { all, any, policy, withPolicy } from '../lib/permission/helpers';
 import type { Policy, UserPermission } from '../lib/types/permissions';
 import type { BetterAuth } from './auth';
 import type { ServerConfig } from './config';

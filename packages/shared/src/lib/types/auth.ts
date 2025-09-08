@@ -8,5 +8,4 @@ export type UserId = typeof UserIdSchema.Type;
 export type SessionId = typeof SessionIdSchema.Type;
 
 export type UserRole = typeof userRoleSchema.Type;
-
 export type User = typeof userSchema.Type;

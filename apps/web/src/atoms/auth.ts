@@ -4,14 +4,34 @@ import type {
 } from '@repo/shared/lib/schemas/auth';
 import { withToast } from '@repo/shared/lib/toasted-atoms';
 import { BetterAuth } from '@repo/shared/services/auth-client';
-import { Effect } from 'effect';
+import { Effect, Option } from 'effect';
 import { webRuntimeAtom } from '@/runtimes/web-runtime';
 
 const defaultAuthFailMessage =
   'Authentication failed. Please try again or contact support.';
 
+const isBetterAuthApiError = (
+  error: unknown
+): error is { _tag: 'BetterAuthApiError'; message: string } => {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    '_tag' in error &&
+    error._tag === 'BetterAuthApiError'
+  );
+};
+
+const getBetterAuthErrorMessage = (
+  err: Option.Option<unknown>
+): string | null => {
+  return Option.match(err, {
+    onNone: () => null,
+    onSome: (e) => (isBetterAuthApiError(e) ? e.message : null),
+  });
+};
+
 export const signInFnAtom = webRuntimeAtom.fn(
-  Effect.fnUntraced(
+  Effect.fn(
     function* (args: typeof emailLoginFormSchema.Type) {
       const betterAuth = yield* BetterAuth;
       const caller = yield* betterAuth.caller;
@@ -21,13 +41,15 @@ export const signInFnAtom = webRuntimeAtom.fn(
       const data = yield* caller((c) => c.signIn.email(args));
 
       yield* Effect.logDebug('Sign in successful for user:', args.email);
+
       return data;
     },
     withToast({
       onFailure: (err, args) => {
-        return err?._tag === 'BetterAuthApiError'
-          ? err.message
-          : `Sign-in failed for ${args.email}. ${defaultAuthFailMessage}`;
+        const email = args[0].email ?? 'unknown user';
+        const defaultError = `Sign-in failed for ${email}. ${defaultAuthFailMessage}`;
+        const betterAuthMessage = getBetterAuthErrorMessage(err);
+        return betterAuthMessage ?? defaultError;
       },
 
       onSuccess: (res, args) => {
@@ -35,10 +57,7 @@ export const signInFnAtom = webRuntimeAtom.fn(
         return `Successfully signed in! Welcome back ${userEmail}`;
       },
 
-      onWaiting: (args) => {
-        const email = args.email;
-        return `Signing in with ${email}...`;
-      },
+      onWaiting: (args) => `Signing in with ${args.email}...`,
     })
   )
 );
@@ -49,23 +68,24 @@ export const signUpFnAtom = webRuntimeAtom.fn(
       const betterAuth = yield* BetterAuth;
       const caller = yield* betterAuth.caller;
 
-      return yield* caller((c) => c.signUp.email(args));
+      return yield* caller((c) =>
+        c.signUp.email({ ...args, callbackURL: '/client/redirect' })
+      );
     },
     withToast({
-      onFailure: (err) =>
-        err?._tag === 'BetterAuthApiError'
-          ? err.message
-          : `Sign-up failed. ${defaultAuthFailMessage}`,
+      onFailure: (err, args) => {
+        const email = args[0].email ?? 'unknown user';
+        const defaultError = `Sign-up failed for ${email}. ${defaultAuthFailMessage}`;
+        const betterAuthMessage = getBetterAuthErrorMessage(err);
+        return betterAuthMessage ?? defaultError;
+      },
 
       onSuccess: (res, args) => {
         const userEmail = (res?.user.email ?? args.email).split('@')[0];
         return `Successfully signed up ${userEmail}! You will be redirected to proceed with account creation.`;
       },
 
-      onWaiting: (args) => {
-        const email = args.email;
-        return `Creating your account with ${email}...`;
-      },
+      onWaiting: (args) => `Creating your account with ${args.email}...`,
     })
   )
 );
@@ -90,14 +110,15 @@ export const socialLoginFnAtom = webRuntimeAtom.fn(
       return data;
     },
     withToast({
-      onFailure: (err, args) =>
-        err?._tag === 'BetterAuthApiError'
-          ? err.message
-          : `Sign-in with ${args.provider} failed. ${defaultAuthFailMessage}`,
-
-      onSuccess: (__, args) => {
-        return `Successfully connected with ${args.provider}! Proceed with the instructions at the social page to connect.`;
+      onFailure: (err, args) => {
+        const provider = args[0].provider ?? 'unknown provider';
+        const defaultError = `Sign-in with ${provider} failed. ${defaultAuthFailMessage}`;
+        const betterAuthMessage = getBetterAuthErrorMessage(err);
+        return betterAuthMessage ?? defaultError;
       },
+
+      onSuccess: (_, args) =>
+        `Successfully connected with ${args.provider}! Proceed with the instructions at the social page to connect.`,
 
       onWaiting: (args) => `Connecting the site with ${args.provider}...`,
     })
