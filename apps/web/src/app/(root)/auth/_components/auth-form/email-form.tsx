@@ -1,8 +1,8 @@
 'use client';
 import { useAtomSet } from '@effect-atom/atom-react';
-import { emailLoginFormSchema } from '@repo/shared/lib/schemas/auth';
 import { WebConfig } from '@repo/shared/services/config';
 import { useForm } from '@tanstack/react-form';
+import { emailLogInFormSchema } from '@workspace/shared/lib/schemas/auth';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -24,7 +24,7 @@ const program = Effect.gen(function* () {
   return { appConfig };
 });
 
-type EmailForm = typeof emailLoginFormSchema.Type;
+type EmailForm = typeof emailLogInFormSchema.Type;
 
 const EmailForm = ({ mode }: { mode: AuthFormModes }) => {
   const { appConfig } = webRuntime.runSync(program);
@@ -35,9 +35,9 @@ const EmailForm = ({ mode }: { mode: AuthFormModes }) => {
     defaultValues: {
       email: '',
       password: '',
-      name: '',
+      name: undefined,
     } satisfies EmailForm as EmailForm,
-    validators: { onSubmit: standardSchemaV1(emailLoginFormSchema) },
+    validators: { onSubmit: standardSchemaV1(emailLogInFormSchema) },
     onSubmit: async ({ value }) => {
       if (mode === 'sign-in') {
         await signInFn(value);

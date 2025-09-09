@@ -13,4 +13,7 @@ export const ConfigSchema = Schema.Struct({
     SignUp: Schema.String,
     ForgetPassword: Schema.String,
   }),
+  ServerRoutes: Schema.Struct({
+    TokenPair: Schema.String,
+  }),
 });

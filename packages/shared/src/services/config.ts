@@ -1,8 +1,8 @@
-import { Context, Effect, Layer, Schema } from 'effect';
+import { Context, Data, Effect, Layer, Schema } from 'effect';
 import type { ConfigSchema } from '../lib/schemas/app-config';
-import { ServerEnvSchema, WebEnvSchema } from '../lib/schemas/env';
+import { WebEnvSchema } from '../lib/schemas/web-env';
 
-const AppConfig = Effect.succeed({
+const Config = Data.struct({
   ApplicationInfo: {
     Name: 'Govi +',
     Id: 'govi-plus',
@@ -15,22 +15,12 @@ const AppConfig = Effect.succeed({
     SignIn: '/auth/sign-in',
     SignUp: '/auth/sign-up',
   },
-} as const satisfies typeof ConfigSchema.Type);
+  ServerRoutes: {
+    TokenPair: '/api/token/pair',
+  },
+} as const);
 
-export class ServerConfig extends Context.Tag('ServerConfig')<
-  ServerConfig,
-  {
-    readonly getEnv: Effect.Effect<typeof ServerEnvSchema>;
-    readonly getAppConfig: Effect.Effect<typeof ConfigSchema.Type>;
-  }
->() {}
-
-export const ServerConfigLive = Layer.succeed(ServerConfig, {
-  getEnv: Effect.gen(function* () {
-    return yield* Effect.succeed(ServerEnvSchema);
-  }),
-  getAppConfig: AppConfig,
-});
+const AppConfig = Effect.succeed(Config satisfies typeof ConfigSchema.Type);
 
 export class WebConfig extends Context.Tag('WebConfig')<
   WebConfig,

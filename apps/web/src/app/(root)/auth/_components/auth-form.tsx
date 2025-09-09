@@ -17,7 +17,6 @@ import { Effect } from 'effect';
 import Link from 'next/link';
 import { webRuntime } from '@/runtimes/web-runtime';
 import EmailForm from './auth-form/email-form';
-import SocialForm from './auth-form/social-form';
 
 const program = Effect.gen(function* () {
   const webConfig = yield* WebConfig;
@@ -51,7 +50,7 @@ const AuthForm = ({ mode }: { mode: AuthFormModes }) => {
       <CardContent>
         <Flex direction="col" spacing="lg">
           <EmailForm mode={mode} />
-          <SocialForm mode={mode} />
+          {/*  <SocialForm mode={mode} /> */}
         </Flex>
       </CardContent>
 

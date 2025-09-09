@@ -3,7 +3,6 @@ import { Result, useAtomValue } from '@effect-atom/atom-react';
 import { Flex } from '@workspace/ui/design-system/spacing';
 import Spinner from '@workspace/ui/design-system/spinner';
 import { Muted } from '@workspace/ui/design-system/typography';
-import type { User } from 'better-auth';
 import { Info } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { authUserSessionAtom } from '@/atoms/auth';
@@ -13,7 +12,7 @@ const ShowToSpecificWrapper = ({
   children,
 }: {
   children: ReactNode;
-  checkUser: (userSession?: User) => boolean;
+  checkUser: (userSession?: null) => boolean;
 }) => {
   const userSession = useAtomValue(authUserSessionAtom);
 

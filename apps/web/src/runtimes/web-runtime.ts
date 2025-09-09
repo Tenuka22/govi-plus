@@ -1,12 +1,11 @@
 import { Atom } from '@effect-atom/atom-react';
-import { BetterAuthALive } from '@repo/shared/services/auth-client';
-import { WebConfigLive } from '@repo/shared/services/config';
+import { ApiProxyLive } from '@workspace/shared/services/client/api-proxy';
+import { WebConfigLive } from '@workspace/shared/services/config';
 import { Layer, ManagedRuntime } from 'effect';
-import { ApiClient } from '@/services/api-client';
+import { getToken } from '@/app/(root)/actions/auth';
 
 const WebRequirements = Layer.mergeAll(
-  ApiClient.Default,
-  BetterAuthALive,
+  ApiProxyLive(getToken),
   WebConfigLive({
     NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL,
     NEXT_PUBLIC_WEB_CLIENT_URL: process.env.NEXT_PUBLIC_WEB_CLIENT_URL,
